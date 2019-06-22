@@ -1,16 +1,12 @@
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.StringUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.io.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class GetDefinition {
 
@@ -65,75 +61,60 @@ public class GetDefinition {
             driver.switchTo().window(handle);
         }
 
-
-
         //click let's study
         Thread.sleep(5000);
         driver.findElement(By.xpath("//*[@id=\"gotolessonpage\"]")).click();
 
-
-
         //click chapter and get terms
-
-
         Thread.sleep(500);
         driver.findElement(By.xpath("//*[@id=\"topiclistnew\"]/div/div[1]/div[1]/a")).click();
         String terms =  driver.findElement(By.xpath("//*[@id=\"lessoncount_1\"]")).getText();
         System.out.println(terms);
 
-
         //click study now
-
         Thread.sleep(500);
         driver.findElement(By.xpath("//*[@id=\"topicstudyspecific\"]")).click();
 
         //click select all
-
         Thread.sleep(500);
+
         //Click all terms
         driver.findElement(By.xpath("//div[contains(@class,'gselect darkbg')]//a[contains(@class,'checkall')]")).click();
 
         //click study now
-
         Thread.sleep(500);
-
         driver.findElement(By.xpath("//*[@id=\"glossstudy\"]")).click();
 
-        PrintWriter writer = new PrintWriter("C:\\definitions.txt", "UTF-8");
+        FileWriter out = new FileWriter("definitions.txt");
+        PrintWriter print = new PrintWriter(out);
 
-        for (int k = 0; k < Integer.parseInt(terms.substring(0,2));k++)
-        {
+        for (int k = 0; k < Integer.parseInt(terms.substring(0,2));k++) {
             List<WebElement> termPulled = driver.findElements(By.tagName("h5"));
             Iterator<WebElement> iter = termPulled.iterator();
             List<WebElement> definitionOfTerm = driver.findElements(By.xpath("//li[starts-with(@id, 'glossdetail')]"));
 
             //Iterator<WebElement> iter2 = definitionOfTerm.iterator();
             int i = 0;
-            while (iter.hasNext())
-            {
-                Thread.sleep(3000);
-                //System.out.println(termPulled.get(i));
+            while (iter.hasNext()) {
+
+                Thread.sleep(500);
                 WebElement item = iter.next();
-                Thread.sleep(3000);
-                //WebElement item2 = iter2.next();
+                Thread.sleep(500);
                 String label = item.getText();
-                System.out.println(definitionOfTerm.get(i).getAttribute("textContent"));
-                //String label2 = item2.getText();
-                System.out.println(label);
-                //System.out.println(item2);
-                writer.println(label);
-                //writer.println(label2);
+                String definition = "";
+                definitionOfTerm = driver.findElements(By.xpath("//li[starts-with(@id, 'glossdetail')]"));
+                definition = definitionOfTerm.get(i).getAttribute("textContent");
+                int lastPeriod = definition.lastIndexOf(".");
+                print.println(label.charAt(0) + label.substring(1).toLowerCase() + ": " + definition.substring(0, lastPeriod + 1));
                 driver.findElement(By.linkText("Correct")).click();
                 i++;
+                String temp2 = driver.findElement(By.xpath("//*[@id=\"page5\"]")).getAttribute("innerText");
+                if (temp2.contains("100.00%"))
+                {
+                    print.close();
+                    return;
+                }
             }
-            writer.close();
         }
-
-
-
-
-
-
-
     }
 }
