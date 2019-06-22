@@ -65,11 +65,17 @@ public class GetDefinition {
         Thread.sleep(5000);
         driver.findElement(By.xpath("//*[@id=\"gotolessonpage\"]")).click();
 
+        //Click all chapters
+        //driver.findElement(By.xpath("//strong[contains(text(),'Select all')]")).click();
+
+
         //click chapter and get terms
         Thread.sleep(500);
         driver.findElement(By.xpath("//*[@id=\"topiclistnew\"]/div/div[1]/div[1]/a")).click();
         String terms =  driver.findElement(By.xpath("//*[@id=\"lessoncount_1\"]")).getText();
-        System.out.println(terms);
+
+
+        //System.out.println(terms);
 
         //click study now
         Thread.sleep(500);
@@ -88,7 +94,7 @@ public class GetDefinition {
         FileWriter out = new FileWriter("definitions.txt");
         PrintWriter print = new PrintWriter(out);
 
-        for (int k = 0; k < Integer.parseInt(terms.substring(0,2));k++) {
+        for (int k = 0; k < 10;k++) {
             List<WebElement> termPulled = driver.findElements(By.tagName("h5"));
             Iterator<WebElement> iter = termPulled.iterator();
             List<WebElement> definitionOfTerm = driver.findElements(By.xpath("//li[starts-with(@id, 'glossdetail')]"));
@@ -97,9 +103,9 @@ public class GetDefinition {
             int i = 0;
             while (iter.hasNext()) {
 
-                Thread.sleep(500);
+                Thread.sleep(1000);
                 WebElement item = iter.next();
-                Thread.sleep(500);
+                Thread.sleep(1000);
                 String label = item.getText();
                 String definition = "";
                 definitionOfTerm = driver.findElements(By.xpath("//li[starts-with(@id, 'glossdetail')]"));
