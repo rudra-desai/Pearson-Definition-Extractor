@@ -52,14 +52,14 @@ public class GetDefinition {
         driver.manage().timeouts().implicitlyWait(100, TimeUnit.SECONDS);
         driver.findElement(By.linkText("Interactive Flash Cards")).click();
 
-        // Store the current window handle
-        String winHandleBefore = driver.getWindowHandle();
 
         //switch to new window
         for (String handle : driver.getWindowHandles())
         {
             driver.switchTo().window(handle);
         }
+
+        driver.manage().window().maximize();
 
         //click let's study
         Thread.sleep(5000);
@@ -68,59 +68,78 @@ public class GetDefinition {
         //Click all chapters
         //driver.findElement(By.xpath("//strong[contains(text(),'Select all')]")).click();
 
+        int chapterCompleteFlag = 0;
+        String chapterCode = "";
+        for(int numChapter = 17; numChapter <= 19; numChapter++) {
+            //click chapter and get terms
+            Thread.sleep(5000);
+            String checker = "//*[@id=\"topiclistnew\"]/div/div[1]/div[" + numChapter +"]/a";
+            driver.findElement(By.xpath(checker)).click();
+            //String terms =  driver.findElement(By.xpath("//*[@id=\"lessoncount_" + numChapter + "\"]")).getText();
 
-        //click chapter and get terms
-        Thread.sleep(500);
-        driver.findElement(By.xpath("//*[@id=\"topiclistnew\"]/div/div[1]/div[1]/a")).click();
-        String terms =  driver.findElement(By.xpath("//*[@id=\"lessoncount_1\"]")).getText();
+
+            //System.out.println(terms);
+
+            //click study now
+            Thread.sleep(500);
+            driver.findElement(By.xpath("//*[@id=\"topicstudyspecific\"]")).click();
+
+            //click select all
+            Thread.sleep(500);
 
 
-        //System.out.println(terms);
+            //Click all terms
+            try {
+                driver.findElement(By.xpath("//div[contains(@class,'gselect darkbg')]//a[contains(@class,'checkall')]")).click();
+            }catch(Exception e)
+            {
+                System.out.println("Catch");
+                driver.findElement(By.xpath("/html/body/article[5]/div/div/a")).click();
+            }
 
-        //click study now
-        Thread.sleep(500);
-        driver.findElement(By.xpath("//*[@id=\"topicstudyspecific\"]")).click();
+            //click study now
+            Thread.sleep(500);
+            driver.findElement(By.xpath("//*[@id=\"glossstudy\"]")).click();
 
-        //click select all
-        Thread.sleep(500);
+            FileWriter out = new FileWriter("ECON Chapter " + numChapter +" definitions.txt");
+            PrintWriter print = new PrintWriter(out);
 
-        //Click all terms
-        driver.findElement(By.xpath("//div[contains(@class,'gselect darkbg')]//a[contains(@class,'checkall')]")).click();
+            while(chapterCompleteFlag == 0) {
+                List<WebElement> termPulled = driver.findElements(By.tagName("h5"));
+                Iterator<WebElement> iter = termPulled.iterator();
+                List<WebElement> definitionOfTerm = driver.findElements(By.xpath("//li[starts-with(@id, 'glossdetail')]"));
 
-        //click study now
-        Thread.sleep(500);
-        driver.findElement(By.xpath("//*[@id=\"glossstudy\"]")).click();
+                int i = 0;
+                while (iter.hasNext()) {
 
-        FileWriter out = new FileWriter("definitions.txt");
-        PrintWriter print = new PrintWriter(out);
+                    Thread.sleep(1000);
+                    WebElement item = iter.next();
+                    Thread.sleep(1000);
+                    String label = item.getText();
+                    String definition = "";
+                    definitionOfTerm = driver.findElements(By.xpath("//li[starts-with(@id, 'glossdetail')]"));
+                    definition = definitionOfTerm.get(i).getAttribute("textContent");
+                    int lastPeriod = definition.lastIndexOf(".");
+                    print.println(label.charAt(0) + label.substring(1).toLowerCase() + ": " + definition.substring(0, lastPeriod + 1).trim().replaceAll(" +", " "));
+                    driver.findElement(By.linkText("Correct")).click();
+                    i++;
 
-        for (int k = 0; k < 10;k++) {
-            List<WebElement> termPulled = driver.findElements(By.tagName("h5"));
-            Iterator<WebElement> iter = termPulled.iterator();
-            List<WebElement> definitionOfTerm = driver.findElements(By.xpath("//li[starts-with(@id, 'glossdetail')]"));
-
-            //Iterator<WebElement> iter2 = definitionOfTerm.iterator();
-            int i = 0;
-            while (iter.hasNext()) {
-
-                Thread.sleep(1000);
-                WebElement item = iter.next();
-                Thread.sleep(1000);
-                String label = item.getText();
-                String definition = "";
-                definitionOfTerm = driver.findElements(By.xpath("//li[starts-with(@id, 'glossdetail')]"));
-                definition = definitionOfTerm.get(i).getAttribute("textContent");
-                int lastPeriod = definition.lastIndexOf(".");
-                print.println(label.charAt(0) + label.substring(1).toLowerCase() + ": " + definition.substring(0, lastPeriod + 1));
-                driver.findElement(By.linkText("Correct")).click();
-                i++;
-                String temp2 = driver.findElement(By.xpath("//*[@id=\"page5\"]")).getAttribute("innerText");
-                if (temp2.contains("100.00%"))
-                {
-                    print.close();
-                    return;
+                    String temp = driver.findElement(By.xpath("//*[@id=\"page5\"]")).getAttribute("textContent");
+                    if (temp.contains("FromLearnedSkippedCorrectChapter") && !temp.equals(chapterCode))
+                    {
+                        chapterCode = temp;
+                        chapterCompleteFlag = 1;
+                        print.close();
+                        break;
+                    }
+                }
+                if(chapterCompleteFlag == 1) {
+                    Thread.sleep(1000);
+                    driver.findElement(By.xpath("//*[@id=\"againlesson\"]")).click();
+                    break;
                 }
             }
+            chapterCompleteFlag = 0;
         }
     }
 }
